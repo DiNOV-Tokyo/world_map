@@ -39,7 +39,7 @@ library(patchwork)
 library(pwt10)
 library(ragg)
 
-
+ 
 #library(rFIA)
 
 library(pals)  
@@ -458,7 +458,7 @@ US Ozone
 #    width = 45, height = 45
 #  )
 
-
+usmap::plot_usmap("states", labels = TRUE)
 
 ```
 
