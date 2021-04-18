@@ -435,7 +435,7 @@ leaflet(dat) %>%
 
 ```
 
-US Ozone
+US abbreviation
 ===========================================
 
 ```{r ozone}
