@@ -438,7 +438,7 @@ leaflet(dat) %>%
 US abbreviation
 ===========================================
 
-```{r ozone}
+```{r abbr}
 
 #ref <- getFIA(states = c('CA', "AZ"), tables = "OZONE_PLOT")
 
