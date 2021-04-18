@@ -1,0 +1,596 @@
+---
+title: "dashboard_map"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: fill
+date: "`r Sys.Date()`"
+runitime: shiny
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(knitr)
+library(shiny)
+library(tidyverse)
+library(tidytext)
+library(tidylo)
+library(ggplot2)
+library(ggrepel)
+
+library(plotly)
+library(afrilearndata)
+library(sf)
+library(leaflet)
+library(leaflet.minicharts)
+library(tmap)
+
+library(rvest)
+library(lwgeom)
+library(rnaturalearth)
+
+library(spocc)
+
+library(DT)
+
+library(lubridate)
+library(showtext)
+library(patchwork)
+library(pwt10)
+library(ragg)
+
+
+#library(rFIA)
+
+library(pals)  
+# devtools::install_github("ropenscilabs/ochRe")
+library(ochRe)
+library(wesanderson)
+  
+library(highcharter)
+```
+
+Globe MAP
+=====================================   
+
+Row
+-----------------------------------------------------------------------
+
+```{r globe_map}
+
+
+world <- rnaturalearth::ne_countries(scale = 'small', returnclass = 'sf')
+
+ggplot() +
+  geom_sf(data=world, color="gray80", aes(fill=continent)) +
+  coord_sf( crs= "+proj=ortho +lat_0=-20 +lon_0=-30") +
+   scale_fill_manual(values=as.vector(ocean.balance(26)))
+
+
+```
+
+
+```{r globe_map2}
+
+ggplot() +
+  geom_sf(data=world, color="gray80", aes(fill=continent)) +
+  coord_sf( crs= "+proj=ortho +lat_0=20 +lon_0=90")+
+   scale_fill_manual(values=as.vector(ocean.balance(26)))
+
+
+
+```
+
+World GDP growth
+=====================================   
+
+```{r world_gdp}
+
+showtext_opts(dpi = 300)
+showtext_auto(enable = TRUE)
+
+data(pwt10.0)
+
+world_map <- map_data("world") %>%
+  filter(region != "Antarctica") %>%
+  as_tibble() %>%
+  fuzzyjoin::regex_left_join(maps::iso3166, c(region = "mapname")) 
+
+chart <- function(country_name){
+  data <- pwt10.0 %>%
+    filter(country == as.character(country_name)) 
+  min_axis <- 0
+  max_axis <- max(data$rgdpe) * 1.1
+  min_date <- min(data$year)
+  data %>%
+    ggplot(aes(year, rgdpe)) +
+    geom_point( size = 1) +
+    geom_line(color = "grey50") +
+    geom_hline(yintercept = 0, color = "grey50", linetype = "dashed") +
+    scale_y_continuous(limits = c(min_axis, max_axis)) +
+    guides(color = FALSE)+
+    labs(title = country_name) +
+    theme(plot.background = element_rect(fill = NA, color = NA),
+          panel.background = element_rect(fill = NA, color = NA),
+          axis.title = element_blank(),
+          axis.text = element_text(family = "heebo", size = 2),
+          panel.grid.minor = element_blank(),
+          panel.grid.major = element_line(color = "grey80", linetype = "dotted"),
+          plot.title = element_text(family = "heebo", size = 5))
+}
+
+centre <- map_data("world") %>% tbl_df %>% 
+  filter(region %in% c("Norway", "Switzerland", "Germany", "South Africa", "Argentina", "China", "India", "Japan", "Canada", "Mexico")) %>%
+  group_by(region) %>%
+  summarise(centx = mean(long),
+            centy = mean(lat))
+countries_lines <- tibble(x = c(-65.5,25.3,-110,-104,135.3,107, 83.5, 10.4,16.2,8.31),
+                          xend = c(-85, 65, -200, -200, 210, 210, 210, 170, 47, -60),
+                          y = c(-37.7, -28.8, 60, 24.2, 35.47, 35, 23.4, 51.2, 60, 46.2),
+                          yend = c(-75, -75, 70, 10, 75, 25, -50, 115, 115, 115)
+)
+
+map <- ggplot() +
+  geom_polygon(data = world_map, aes(long, lat, group = group, fill = group), color = "grey50", size = 0.3) +
+  scale_fill_gradient2(low = "#F21A00", mid = "#E9C825", high = "#3B9AB2", midpoint = -0.3, labels = scales::percent, na.value="grey80") +
+  geom_segment(data = countries_lines, aes(x = x, xend = xend, y = y , yend = yend), color = "grey50", inherit.aes = FALSE) +
+  scale_x_continuous(limits = c(-350, 350), expand = c(0,0)) +
+  scale_y_continuous(limits = c(-130, 170)) +
+  labs(fill = "Growth of GDP", size =10) +
+  guides(fill = guide_colorbar(title.position = "top",
+                               label.position = "bottom",
+                               title.hjust = 0.2,
+                               barwidth = 10)) +
+  theme_void() +
+  theme(legend.position = c(0.15, 0.12),
+        legend.direction = "horizontal",
+        legend.title = element_text(size = 8),
+        legend.text = element_text(size = 2))
+
+
+norway <- chart("Norway")
+swiss <- chart("Switzerland")
+germany <- chart("Germany")
+south_africa <- chart("South Africa")
+argentina <- chart("Argentina")
+china <- chart("China")
+india <- chart("India")
+japan <- chart("Japan")
+canada <- chart("Canada")
+mexico <- chart("Mexico")
+final <- map + 
+  inset_element(norway,0.5,0.8,0.65,1.0) +
+  inset_element(swiss,0.3,0.8,0.45,1.0) +
+  inset_element(germany,0.7,0.8,0.85,1.0) +
+  inset_element(south_africa,0.55,0.05,0.70,0.25) +
+  inset_element(japan,0.8,0.6,0.95,0.8) +
+  inset_element(china,0.8,0.4,0.95,0.6) +
+  inset_element(india,0.8,0.15,0.95,0.35) +
+  inset_element(argentina,0.3,0.05,0.45,0.25) +
+  inset_element(mexico,0.05,0.4,0.2,0.6) +
+  inset_element(canada,0.05,0.6,0.2,0.8) 
+
+final
+
+```
+
+
+World Gross National Income
+=====================================
+
+```{r GNI}
+
+data(GNI2014, package = "treemap")
+
+hcmap(
+  "custom/world-robinson-lowres", 
+  data = GNI2014,
+  name = "Gross national income per capita", 
+  value = "GNI",
+  borderWidth = 0,
+  nullColor = "#d3d3d3",
+  joinBy = c("iso-a3", "iso3")
+  ) %>%
+  hc_colorAxis(
+    stops = color_stops(colors = viridisLite::inferno(10, begin = 0.1)),
+    type = "logarithmic"
+    ) 
+
+```
+
+
+World coffee production
+=====================================   
+
+Row
+-----------------------------------------------------------------------
+
+### Data Table
+
+```{r world_coffee_table}
+
+coffee_html <- read_html("https://en.wikipedia.org/wiki/List_of_countries_by_coffee_production")
+
+results <- coffee_html %>% 
+  html_table(fill=TRUE)
+coffee_df <- results[1] %>% 
+  as.data.frame() 
+
+coffee_dat <- coffee_df %>% 
+  rename(sovereignt=Country) %>% 
+  mutate(Metric.Tons = str_remove_all(Metric.Tons, ",")) %>% 
+  select(Rank, sovereignt, Metric.Tons)
+
+world <- ne_countries(scale = "medium", returnclass = "sf")
+world_joined <- left_join(world, coffee_dat, key = sovereignt)
+
+datatable(coffee_df)
+
+```
+
+### Production Map
+
+```{r world_coffee_map}
+
+ggplot(data =  world_joined)+
+  geom_sf(aes(fill = as.numeric(Metric.Tons)), 
+          color = "black")+ 
+  labs(fill='Coffee production')  +
+  scale_fill_viridis_c(option = "viridis")
+
+```
+
+
+EU map
+=====================================   
+
+
+```{r eu_map}
+
+
+map <- read_sf("shp_euro/Europe.shp") 
+
+eu_map <- map %>%  mutate( 
+    centroid = st_centroid(geometry),
+    x = st_coordinates(centroid)[, 1],
+    y = st_coordinates(centroid)[, 2]
+  )
+eu_map %>% 
+  ggplot() +
+  geom_sf(aes(fill = NAME)) + 
+  coord_sf(datum = NA)+
+  theme_bw()+
+  theme(legend.position = 'none',
+        panel.background = element_blank(),
+        axis.title.x = element_blank(), 
+        axis.title.y = element_blank()) +
+#  theme_bw()+
+  scale_size(range=c(1,10))+ 
+  scale_fill_ochre() +
+#  scale_fill_manual(values=as.vector(ocean.delta(177)))+
+#  theme(legend.key.width=unit(0.2,"cm"),
+#        legend.key.height=unit(0.1,"cm"),
+#        legend.position = c(1.2, 0.7), 
+#        legend.text=element_text(size=4))+
+#  guides(fill=guide_legend(title="Country name"))+ 
+  geom_text_repel(aes(x = x, y = y, label = NAME), col="black", size = 2)
+
+
+
+```
+
+Great Britain UFO map
+==========================================
+
+```{r GB_UFO}
+
+
+map <- read_sf("GBR_adm/GBR_adm1.shp") # GBのシェープファイル
+
+dat <- map %>%
+  group_by(NAME_1) %>% 
+  mutate(
+    centroid = st_centroid(geometry),
+    x = st_coordinates(centroid)[, 1],
+    y = st_coordinates(centroid)[, 2]
+  ) 
+
+
+ufo_sightings <- readr::read_csv("https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2019/2019-06-25/ufo_sightings.csv")
+
+sightings <- ufo_sightings %>%
+  filter(country == "gb") %>%
+  group_by(city_area, latitude, longitude) %>%
+  summarise(count=n()) %>% 
+  ungroup()
+
+
+dat %>%
+  ggplot() +
+  geom_sf(aes(fill = NAME_1)) +  # 人口毎に色分け
+  coord_sf(datum = NA) + 
+  theme_void()+
+  geom_point(data = sightings, aes(x = longitude, y = latitude, size = count), col="yellow") +
+  scale_fill_manual(name = "country", values = wes_palette("Moonrise2"))+
+  geom_text_repel(aes(x = x, y = y, label = NAME_1), col="red", size = 1.5)
+
+
+
+```
+
+States beer map
+=====================================   
+
+```{r us_map}
+# https://eric.clst.org/tech/usgeojson/
+# https://rpubs.com/juliasilge/beer_awards
+
+beer_awards <- read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-10-20/beer_awards.csv') %>%
+  mutate(state = str_to_upper(state))
+
+word_counts <- beer_awards %>%
+  unnest_tokens(word, category) %>%
+  anti_join( get_stopwords() ) %>%
+  count(state, word, sort = TRUE)
+
+word_log_odds <- word_counts %>%
+  bind_log_odds(state, word, n) %>%
+  arrange(state, word)
+
+state_words <- word_log_odds %>%
+  group_by(n) %>%
+  filter(sum(n) > 5) %>%
+  ungroup() %>%
+  group_by(state) %>%
+  top_n(3) %>%
+  ungroup() %>%
+  select(state, word)
+
+labels <- state_words %>%
+  group_by(state) %>%
+  summarise(word = paste(word, collapse = "<br/>"))
+
+states <- geojsonio::geojson_read("gz_2010_us_040_00_20m.json", what = "sp")
+
+medals <- tibble(state.name = states$NAME) %>%
+  left_join(
+    beer_awards %>%
+      count(state) %>%
+      left_join(tibble(state = state.abb, state.name))
+  ) %>%
+  left_join(labels) %>%
+  replace_na(list(n = 0,
+                  word = "<i>none</i>"))
+
+states$medals <- medals$n
+
+label <- map(medals$word, htmltools::HTML)
+
+bins <- c(0, 50, 100, 200, 500, 1000)
+pal <- colorBin(palette = "OrRd", domain = medals, bins = bins)
+
+m <- leaflet(states) %>%
+  setView(-96, 37.8, 4) %>%
+  addTiles() %>%
+  addPolygons(
+    fillColor = ~ pal(medals),
+    weight = 2,
+    opacity = 1,
+    color = "white",
+    fillOpacity = 0.5,
+    highlight = highlightOptions(
+      weight = 5,
+      color = "white",
+      fillOpacity = 0.7,
+      bringToFront = TRUE),
+    label = label,
+    labelOptions = labelOptions(
+      style = list("font-weight" = "normal", padding = "3px 8px"),
+      textsize = "12px",
+      direction = "auto")) %>%
+  addLegend("bottomright", pal = pal, values = ~medals,
+            title = "Total medals",
+            opacity = 1
+  )
+
+m
+```
+
+
+States airport map
+=====================================   
+
+```{r us_airport}
+
+airport <- read_html("https://www.latlong.net/category/airports-236-19.html")
+
+airport_table <- airport %>% 
+  html_table %>%
+  `[[`(1) 
+
+leaflet(airport_table) %>% 
+  addTiles() %>% 
+  addMarkers(lng=~Longitude,lat=~Latitude,popup=~`Place Name`,label=paste(airport_table$`Place Name`,"</br>",airport_table$Longitude,airport_table$Latitude,sep=","))
+
+```
+
+States hawk map
+=====================================   
+
+```{r us_hawk}
+
+df <- occ(query = 'Accipiter striatus', from = 'bison')
+
+dat <- occ2df(df)
+
+redLeafIcon <- makeIcon(
+  iconUrl = "http://leafletjs.com/examples/custom-icons/leaf-red.png",
+  iconWidth = 10, iconHeight = 20,
+)
+
+leaflet(dat) %>%
+  addTiles() %>%
+  addMarkers(dat$longitude, dat$latitude, popup = dat$date, icon = redLeafIcon)
+
+
+```
+
+US Ozone
+===========================================
+
+```{r ozone}
+
+#ref <- getFIA(states = c('CA', "AZ"), tables = "OZONE_PLOT")
+
+#ref$OZONE_PLOT %>% 
+#  leaflet() %>% 
+#  addTiles() %>% 
+#  addMarkers(
+#    lng = ref$OZONE_PLOT$LON,
+#    lat = ref$OZONE_PLOT$LAT,
+#  )
+#  addMinicharts(
+#    lng = ref$OZONE_PLOT$LON,
+#    lat = ref$OZONE_PLOT$LAT,
+#    type = "bar",
+#    chartdata = ref$OZONE_PLOT[,1:2],
+#    colorPalette = c("red", "yellow"),
+#    width = 45, height = 45
+#  )
+
+
+
+```
+
+
+Asia map
+=====================================   
+
+Row
+-----------------------------------------------------------------------
+
+### Raw Data
+
+```{r asia_data}
+
+asia <- rnaturalearth::ne_countries(
+  continent = "Asia",
+  returnclass = "sf"
+)
+
+asia_dat <- asia %>%
+  mutate( 
+    centroid = st_centroid(geometry),
+    x = st_coordinates(centroid)[, 1],
+    y = st_coordinates(centroid)[, 2]
+  ) %>%
+  arrange(desc(pop_est)) %>% 
+  select(name, adm0_a3, formal_en, pop_est, gdp_md_est, subregion, x, y, geometry, centroid)
+
+datatable(asia_dat)
+
+```
+
+### Map
+
+```{r asia_map}
+
+asia_dat %>%
+  ggplot() +
+  geom_sf(aes(fill = pop_est)) +
+  coord_sf(datum = NA) +
+  scale_fill_viridis_c(alpha = 0.6) +
+  theme_void()+ 
+  geom_text_repel(aes(x = x, y = y, label = name), col="blue", size = 2)+
+   labs(title="Asian Countries in population", 
+         caption="Sources:rnaturalearth") 
+
+
+```
+
+ Africa
+=====================================   
+
+
+Row
+-----------------------------------------------------------------------
+
+### Countries / Capital / Highway 
+
+```{r map_all}
+
+tm_shape(afripop2020) +
+  tm_raster(palette = rev(viridisLite::magma(5)), breaks=c(0,2,20,200,2000,25000)) +
+  tm_shape(africountries) +
+  tm_borders("red", lwd = .7) +
+#  tm_shape(afrihighway) +
+#  tm_lines(col = "green", alpha=0.6) + 
+  tm_shape(africapitals) +
+  tm_symbols(col = "blue", alpha=0.6, scale = .4 )+
+  tm_legend(show = FALSE)
+
+
+```
+
+### Population
+
+```{r map}
+
+dat <- africountries %>%
+  mutate( 
+    centroid = st_centroid(geometry),
+    x = st_coordinates(centroid)[, 1],
+    y = st_coordinates(centroid)[, 2]
+  ) %>%
+  arrange(desc(pop_est))
+
+dat %>%
+  ggplot() +
+  geom_sf(aes(fill = pop_est)) +
+  coord_sf(datum = NA) +
+  scale_fill_viridis_c(alpha = 0.6) +
+  theme_void()+ 
+  geom_text_repel(aes(x = x, y = y, label = name), col="black", size = 3)
+
+#plotly(p_map)
+
+```
+
+
+GBIF
+=====================================   
+
+
+Row
+-----------------------------------------------------------------------
+
+### GBIF Data plot
+
+```{r gbif}
+
+library(rgbif)
+
+gbif_data <- occ_data(scientificName = "Equisetum arvense", hasCoordinate = TRUE, limit = 100)
+
+gbif_select_data <- gbif_data$data %>% 
+  select(scientificName, decimalLatitude, decimalLongitude, eventDate) 
+
+options(viewer = NULL)
+
+gbif_select_data %>% 
+  leaflet() %>%
+  addTiles() %>% 
+  addMarkers(lat=gbif_select_data$decimalLatitude, lng=gbif_select_data$decimalLongitude)
+
+```
+
+### Data
+
+```{r data_gbif}
+
+gbif_select_data %>% 
+  datatable()
+
+```
+
+
