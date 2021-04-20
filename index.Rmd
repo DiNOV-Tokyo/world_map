@@ -9,7 +9,10 @@ runitime: shiny
 ---
 
 ```{r setup, include=FALSE}
+
+
 library(flexdashboard)
+library(raster)
 library(knitr)
 library(shiny)
 library(tidyverse)
@@ -417,7 +420,23 @@ leaflet(airport_table) %>%
 States hawk map
 =====================================   
 
-```{r us_hawk}
+```{r us_hawk, warning=FALSE}
+
+library(prism)
+prism_set_dl_dir("~/prismtmp")
+get_prism_normals(type="tmean", resolution = "4km", mon = 1:6, keepZip = FALSE)
+jmean <- prism_archive_subset(
+  "tmean", "monthly normals", mon = 4, resolution = "4km"
+)
+rast <- raster(pd_to_file(jmean))
+
+pal <- colorNumeric(
+  c("#0000FF", "#FFFF00", "#FF0000"), 
+  values(rast),
+  na.color = "transparent"
+)
+
+
 
 df <- occ(query = 'Accipiter striatus', from = 'bison')
 
@@ -428,10 +447,18 @@ redLeafIcon <- makeIcon(
   iconWidth = 10, iconHeight = 20,
 )
 
-leaflet(dat) %>%
-  addTiles() %>%
-  addMarkers(dat$longitude, dat$latitude, popup = dat$date, icon = redLeafIcon)
+#leaflet(dat) %>%
+#  addTiles() %>%
+#  addMarkers(dat$longitude, dat$latitude, popup = dat$date, icon = redLeafIcon)
 
+
+leaflet(dat) %>% 
+  addTiles(
+    urlTemplate = 'http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+  ) %>% 
+  addRasterImage(rast, colors = pal, opacity=.75) %>% 
+  addMarkers(dat$longitude, dat$latitude, popup = dat$date, icon = redLeafIcon) %>% 
+  addLegend(pal = pal, values = values(rast), title = "Mean temp Deg C")
 
 ```
 
