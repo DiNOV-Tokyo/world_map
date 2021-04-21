@@ -230,6 +230,24 @@ world_joined <- left_join(world, coffee_dat, key = sovereignt)
 datatable(coffee_df)
 
 ```
+Row 
+-----------------------------------------
+
+### Chart
+
+```{r pie}
+
+coffee_dat %>% 
+  mutate(val = as.numeric(Metric.Tons)) %>% 
+  arrange(desc(val)) %>% 
+  slice(1:20) %>% 
+  ggplot(aes(x="",  y=val, fill=sovereignt)) + 
+  geom_col(width = 1) + 
+  coord_polar("y")
+
+
+```
+
 
 ### Production Map
 
