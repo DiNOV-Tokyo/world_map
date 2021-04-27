@@ -2,7 +2,7 @@
 title: "dashboard_map"
 output: 
   flexdashboard::flex_dashboard:
-    orientation: rows
+    orientation: columns
     vertical_layout: fill
 date: "`r Sys.Date()`"
 runitime: shiny
@@ -56,8 +56,6 @@ library(highcharter)
 Globe MAP
 =====================================   
 
-Row
------------------------------------------------------------------------
 
 ```{r globe_map}
 
@@ -205,7 +203,7 @@ hcmap(
 World coffee production
 =====================================   
 
-Row
+Column {data-width=400}
 -----------------------------------------------------------------------
 
 ### Data Table
@@ -230,8 +228,7 @@ world_joined <- left_join(world, coffee_dat, key = sovereignt)
 datatable(coffee_df)
 
 ```
-Row 
------------------------------------------
+
 
 ### Chart
 
@@ -243,10 +240,15 @@ coffee_dat %>%
   slice(1:20) %>% 
   ggplot(aes(x="",  y=val, fill=sovereignt)) + 
   geom_col(width = 1) + 
-  coord_polar("y")
+#  scale_fill_manual(values = wes_palette("Moonrise2")) +
+  coord_polar("y") +
+  theme(axis.title.x = element_blank(), axis.title.y = element_blank())
 
 
 ```
+
+Column {data-width=600}
+-----------------------------------------
 
 
 ### Production Map
@@ -346,6 +348,15 @@ States beer map
 # https://eric.clst.org/tech/usgeojson/
 # https://rpubs.com/juliasilge/beer_awards
 
+
+airport <- read_html("https://www.latlong.net/category/airports-236-19.html")
+
+airport_table <- airport %>% 
+  html_table %>%
+  `[[`(1) 
+
+
+
 beer_awards <- read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-10-20/beer_awards.csv') %>%
   mutate(state = str_to_upper(state))
 
@@ -412,10 +423,11 @@ m <- leaflet(states) %>%
   addLegend("bottomright", pal = pal, values = ~medals,
             title = "Total medals",
             opacity = 1
-  )
+  ) %>% 
+  addMarkers(data=airport_table, lng=~Longitude,lat=~Latitude,popup=~`Place Name`,label=paste(airport_table$`Place Name`,"</br>",airport_table$Longitude,airport_table$Latitude,sep=","))
 
 m
-```
+``` 
 
 
 States airport map
@@ -511,9 +523,6 @@ usmap::plot_usmap("states", labels = TRUE)
 Asia map
 =====================================   
 
-Row
------------------------------------------------------------------------
-
 ### Raw Data
 
 ```{r asia_data}
@@ -556,9 +565,6 @@ asia_dat %>%
  Africa
 =====================================   
 
-
-Row
------------------------------------------------------------------------
 
 ### Countries / Capital / Highway 
 
@@ -606,8 +612,6 @@ GBIF
 =====================================   
 
 
-Row
------------------------------------------------------------------------
 
 ### GBIF Data plot
 
