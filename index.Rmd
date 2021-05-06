@@ -56,6 +56,8 @@ library(highcharter)
 Globe MAP
 =====================================   
 
+Column
+-------------------------------------
 
 ```{r globe_map}
 
@@ -70,7 +72,8 @@ ggplot() +
 
 ```
 
-
+Column
+-------------------------------
 ```{r globe_map2}
 
 ggplot() +
@@ -430,31 +433,15 @@ m
 ``` 
 
 
-States airport map
-=====================================   
-
-```{r us_airport}
-
-airport <- read_html("https://www.latlong.net/category/airports-236-19.html")
-
-airport_table <- airport %>% 
-  html_table %>%
-  `[[`(1) 
-
-leaflet(airport_table) %>% 
-  addTiles() %>% 
-  addMarkers(lng=~Longitude,lat=~Latitude,popup=~`Place Name`,label=paste(airport_table$`Place Name`,"</br>",airport_table$Longitude,airport_table$Latitude,sep=","))
-
-```
 
 States hawk map
 =====================================   
 
-```{r us_hawk, warning=FALSE}
+```{r us_hawk, warning=FALSE, message=FALSE}
 
 library(prism)
 prism_set_dl_dir("~/prismtmp")
-get_prism_normals(type="tmean", resolution = "4km", mon = 1:6, keepZip = FALSE)
+#get_prism_normals(type="tmean", resolution = "4km", mon = 1:6, keepZip = FALSE)
 jmean <- prism_archive_subset(
   "tmean", "monthly normals", mon = 4, resolution = "4km"
 )
@@ -523,6 +510,8 @@ usmap::plot_usmap("states", labels = TRUE)
 Asia map
 =====================================   
 
+Column
+------------------------------------
 ### Raw Data
 
 ```{r asia_data}
@@ -544,6 +533,9 @@ asia_dat <- asia %>%
 datatable(asia_dat)
 
 ```
+
+Column
+------------------------------------
 
 ### Map
 
