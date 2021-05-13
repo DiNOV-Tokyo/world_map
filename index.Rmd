@@ -441,7 +441,7 @@ States hawk map
 
 library(prism)
 prism_set_dl_dir("~/prismtmp")
-#get_prism_normals(type="tmean", resolution = "4km", mon = 1:6, keepZip = FALSE)
+get_prism_normals(type="tmean", resolution = "4km", mon = 1:6, keepZip = FALSE)
 jmean <- prism_archive_subset(
   "tmean", "monthly normals", mon = 4, resolution = "4km"
 )
@@ -557,6 +557,8 @@ asia_dat %>%
  Africa
 =====================================   
 
+Column
+-----------------------------------------------
 
 ### Countries / Capital / Highway 
 
@@ -574,6 +576,9 @@ tm_shape(afripop2020) +
 
 
 ```
+
+Column
+-----------------------------------------------
 
 ### Population
 
@@ -603,7 +608,8 @@ dat %>%
 GBIF
 =====================================   
 
-
+Column
+-----------------------------------------------
 
 ### GBIF Data plot
 
@@ -624,6 +630,9 @@ gbif_select_data %>%
   addMarkers(lat=gbif_select_data$decimalLatitude, lng=gbif_select_data$decimalLongitude)
 
 ```
+
+Column
+-----------------------------------------------
 
 ### Data
 
