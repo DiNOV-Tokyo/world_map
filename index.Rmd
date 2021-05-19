@@ -22,6 +22,7 @@ library(ggplot2)
 library(ggrepel)
 
 library(plotly)
+# remotes::install_github("afrimapr/afrilearndata")
 library(afrilearndata)
 library(sf)
 library(leaflet)
@@ -99,6 +100,7 @@ world_map <- map_data("world") %>%
   filter(region != "Antarctica") %>%
   as_tibble() %>%
   fuzzyjoin::regex_left_join(maps::iso3166, c(region = "mapname")) 
+
 
 chart <- function(country_name){
   data <- pwt10.0 %>%
@@ -473,9 +475,10 @@ leaflet(dat) %>%
   addTiles(
     urlTemplate = 'http://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
   ) %>% 
-  addRasterImage(rast, colors = pal, opacity=.75) %>% 
-  addMarkers(dat$longitude, dat$latitude, popup = dat$date, icon = redLeafIcon) %>% 
-  addLegend(pal = pal, values = values(rast), title = "Mean temp Deg C")
+  addRasterImage(rast, colors = pal, opacity=.75) 
+#%>% 
+#  addMarkers(dat$longitude, dat$latitude, popup = dat$date, icon = redLeafIcon) %>% 
+#  addLegend(pal = pal, values = values(rast), title = "Mean temp Deg C")
 
 ```
 
