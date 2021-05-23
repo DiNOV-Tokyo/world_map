@@ -27,6 +27,8 @@ library(afrilearndata)
 library(sf)
 library(leaflet)
 library(leaflet.minicharts)
+library(leaflegend)
+library(leafpop)
 library(tmap)
 
 library(rvest)
@@ -479,6 +481,43 @@ leaflet(dat) %>%
 #%>% 
 #  addMarkers(dat$longitude, dat$latitude, popup = dat$date, icon = redLeafIcon) %>% 
 #  addLegend(pal = pal, values = values(rast), title = "Mean temp Deg C")
+
+```
+
+Quake
+===========================================
+
+```{r quake}
+
+data(quakes)
+quakes[['group']] <- sample(c('A', 'B', 'C'), nrow(quakes), replace = TRUE)
+factorPal <- colorFactor('Dark2', quakes$group)
+leaflet() %>%
+  addTiles() %>%
+  addCircleMarkers(
+    data = quakes,
+    lat = ~ lat,
+    lng = ~ long,
+    radius = ~ mag * 1.5,
+    popup = popupTable(quakes),
+    color = ~ factorPal(group),
+    opacity = ~ depth / 1000,
+    fillOpacity = ~ depth / 1000
+  ) %>%
+  addLegendFactor(
+    pal = factorPal,
+    title = htmltools::tags$div('Factor', style = 'font-size: 18px; color: blue;'),
+    labelStyle = 'font-size: 18px; font-weight: bold;',
+    orientation = 'horizontal',
+    values = quakes$group,
+    position = 'bottomleft',
+    shape = 'circle',
+    width = 20,
+    height = 20
+  )
+
+
+
 
 ```
 
