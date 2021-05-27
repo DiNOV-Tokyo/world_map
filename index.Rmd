@@ -626,6 +626,7 @@ Column
 
 ```{r map}
 
+
 dat <- africountries %>%
   mutate( 
     centroid = st_centroid(geometry),
@@ -638,9 +639,9 @@ dat %>%
   ggplot() +
   geom_sf(aes(fill = pop_est)) +
   coord_sf(datum = NA) +
-  scale_fill_viridis_c(alpha = 0.6) +
+  scale_fill_gradientn(colours = terrain.colors(7))+
   theme_void()+ 
-  geom_text_repel(aes(x = x, y = y, label = name), col="black", size = 3)
+  geom_text_repel(aes(x = x, y = y, label = name), col="blue", size = 3)
 
 #plotly(p_map)
 
