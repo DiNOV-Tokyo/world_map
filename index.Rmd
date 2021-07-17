@@ -544,6 +544,10 @@ leaflet() %>%
 US abbreviation
 ===========================================
 
+Column {data-width=600}
+------------------------------------
+## US abbreviation
+
 ```{r abbr}
 
 #ref <- getFIA(states = c('CA', "AZ"), tables = "OZONE_PLOT")
@@ -567,6 +571,47 @@ US abbreviation
 usmap::plot_usmap("states", labels = TRUE)
 
 ```
+
+Column
+------------------------------------
+## St.Louis
+
+```{r stl}
+
+library(biscale)
+library(ggplot2)
+library(cowplot)
+library(sf)
+
+
+data <- bi_class(stl_race_income, x = pctWhite, y = medInc, style = "quantile", dim = 3)
+
+
+map <- ggplot() +
+  geom_sf(data = data, mapping = aes(fill = bi_class), color = "white", size = 0.1, show.legend = FALSE) +
+  bi_scale_fill(pal = "DkCyan", dim = 3) +
+  labs(
+    title = "Race and Income in St. Louis, MO",
+    subtitle = "Dark Cyan (DkCyan) Palette"
+  ) +
+  bi_theme()
+
+legend <- bi_legend(pal = "DkCyan",
+                    dim = 3,
+                    xlab = "Higher % White ",
+                    ylab = "Higher Income ",
+                    size = 7)
+
+
+finalPlot <- ggdraw() +
+  draw_plot(map, 0, 0, 1, 1) +
+  draw_plot(legend, 0.1, .6, 0.2, 0.2)
+
+finalPlot
+
+
+```
+
 
 
 Asia map
