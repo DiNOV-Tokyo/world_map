@@ -456,7 +456,36 @@ m <- leaflet(states) %>%
 m
 ``` 
 
+States terrain
+=====================================   
+```{r terrain}
 
+library(terrainr)
+library(sf)
+library(progressr)
+
+#handlers("progress")
+#handlers(global = TRUE)
+location_of_interest <- tmaptools::geocode_OSM("Willits California")$coords
+location_of_interest <- data.frame(
+  x = location_of_interest[["x"]],
+  y = location_of_interest[["y"]]
+)
+location_of_interest <- st_as_sf(
+  location_of_interest, 
+  coords = c("x", "y"), 
+  crs = 4326
+)
+location_of_interest <- set_bbox_side_length(location_of_interest, 8000)
+output_tiles <- get_tiles(location_of_interest,
+                          services = c("elevation", "ortho"),
+                          resolution = 30 # pixel side length in meters
+)
+
+raster::plotRGB(raster::brick(output_tiles[["ortho"]][[1]]), scale = 1)
+
+
+```
 
 States hawk map
 =====================================   
